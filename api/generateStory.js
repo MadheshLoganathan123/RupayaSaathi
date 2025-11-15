@@ -1,4 +1,4 @@
-// /api/generateStory.js
+// /api/story.js
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,22 +26,12 @@ export default async function handler(req, res) {
     }
     body = body || {};
 
-    const { language = 'english', topic = 'saving money' } = body;
+    const { language = 'english' } = body;
 
     // Input validation and sanitization
     const lang = String(language || 'english').toLowerCase().trim();
     if (!['english', 'hindi', 'tamil'].includes(lang)) {
       return res.status(400).json({ error: 'Unsupported language. Use english, hindi or tamil.' });
-    }
-
-    // Sanitize topic: remove special characters, limit length
-    const sanitizedTopic = String(topic || 'saving money')
-      .trim()
-      .slice(0, 100) // Limit length
-      .replace(/[<>\"']/g, ''); // Remove potentially dangerous characters
-
-    if (!sanitizedTopic || sanitizedTopic.length === 0) {
-      return res.status(400).json({ error: 'Topic cannot be empty' });
     }
 
     // Build prompt for the model — request strict JSON output
@@ -54,7 +44,6 @@ Output MUST be valid JSON only (no extra text). Use the EXACT keys: title, story
 - correct: integer 0 or 1 indicating the correct option index
 
 Language: ${lang}
-Topic hint: ${sanitizedTopic}
 
 Return only JSON.`;
 
@@ -65,11 +54,67 @@ Return only JSON.`;
       return res.status(400).json({ error: 'Prompt too long. Please use a shorter topic.' });
     }
 
+    // Fallback stories for each language when AI is unavailable
+    const fallbackStories = {
+      english: [
+        {
+          title: 'Save First',
+          story: 'Priya got her monthly salary. She saved 20% first, then used the rest for expenses. She built an emergency fund.',
+          question: 'What did Priya do with her salary first?',
+          options: ['Paid bills', 'Saved 20%'],
+          correct: 1
+        },
+        {
+          title: 'Budget Planning',
+          story: 'Rahul made a monthly budget. He tracked all expenses and found he was spending too much on snacks. He reduced snack spending.',
+          question: 'What did Rahul discover from budgeting?',
+          options: ['He needed more income', 'He overspent on snacks'],
+          correct: 1
+        },
+        {
+          title: 'Smart Shopping',
+          story: 'Anita wanted to buy a phone. She compared prices online, waited for a sale, and saved 30% on the purchase.',
+          question: 'How did Anita save money on her phone?',
+          options: ['Bought immediately', 'Waited for sale'],
+          correct: 1
+        }
+      ],
+      hindi: [
+        {
+          title: 'पहले बचाएं',
+          story: 'प्रिया को उसकी मासिक सैलरी मिली। उसने पहले 20% बचाई, फिर बाकी खर्चों के लिए इस्तेमाल किया। उसने एक आपातकालीन फंड बनाया।',
+          question: 'प्रिया ने अपनी सैलरी सबसे पहले क्या किया?',
+          options: ['बिल चुकाए', '20% बचाए'],
+          correct: 1
+        },
+        {
+          title: 'बजट योजना',
+          story: 'राहुल ने मासिक बजट बनाया। उसने सभी खर्चों को ट्रैक किया और पाया कि वह नाश्ते पर ज्यादा खर्च कर रहा था। उसने नाश्ते के खर्च को कम किया।',
+          question: 'राहुल को बजटिंग से क्या पता चला?',
+          options: ['उसे ज्यादा आय की जरूरत है', 'वह नाश्ते पर ज्यादा खर्च करता था'],
+          correct: 1
+        }
+      ],
+      tamil: [
+        {
+          title: 'முதலில் சேமிக்கவும்',
+          story: 'பிரியாவுக்கு அவளது மாதச் சம்பளம் கிடைத்தது. அவள் முதலில் 20% சேமித்தாள், பிறகு மீதமுள்ளவற்றைச் செலவழித்தாள். அவள் அவசரகால நிதியை உருவாக்கினாள்.',
+          question: 'பிரியா தனது சம்பளத்தை முதலில் என்ன செய்தாள்?',
+          options: ['பில்கள் செலுத்தினாள்', '20% சேமித்தாள்'],
+          correct: 1
+        }
+      ]
+    };
+
     // OpenRouter API key from env
     const apiKey = process.env.OPENROUTER_API_KEY;
+
+    // Try AI generation if API key is available, otherwise use fallback
     if (!apiKey) {
-      console.error('OPENROUTER_API_KEY not configured');
-      return res.status(500).json({ error: 'OPENROUTER_API_KEY not configured on server' });
+      console.log('OPENROUTER_API_KEY not configured, using fallback stories');
+      const stories = fallbackStories[lang] || fallbackStories.english;
+      const randomStory = stories[Math.floor(Math.random() * stories.length)];
+      return res.status(200).json(randomStory);
     }
 
     // Call OpenRouter API with timeout
@@ -82,16 +127,16 @@ Return only JSON.`;
       response = await fetch(openRouterUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json',
-          'HTTP-Referer': 'https://rupayasaathi.vercel.app',
+          'Authorization': `Bearer ${apiKey}`,
+          'HTTP-Referer': 'http://localhost:3000',
           'X-Title': 'RupayaSaathi'
         },
         body: JSON.stringify({
-          model: 'mistral-7b-instruct',
+          model: 'deepseek',
           messages: [{ role: 'user', content: prompt }],
-          temperature: 0.7,
-          max_tokens: 300
+          temperature: 0.3,
+          max_tokens: 500
         }),
         signal: controller.signal
       });
@@ -213,9 +258,11 @@ Return only JSON.`;
 
     // Validate non-empty strings
     if (!result.title || !result.story || !result.question) {
-      return res.status(422).json({ 
-        error: 'Model output contains empty required fields' 
-      });
+      // Use fallback stories if AI generation fails validation
+      console.log('AI generation validation failed, using fallback stories');
+      const stories = fallbackStories[lang] || fallbackStories.english;
+      const randomStory = stories[Math.floor(Math.random() * stories.length)];
+      return res.status(200).json(randomStory);
     }
 
     // Return clean formatted JSON (direct object, not wrapped)

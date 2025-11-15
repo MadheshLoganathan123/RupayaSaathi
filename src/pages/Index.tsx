@@ -12,9 +12,19 @@ import StoryHistory from "@/components/StoryHistory";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  const [currentStory, setCurrentStory] = useState<StoryData | null>(null);
+  // Load latest story from localStorage on mount
+  const [currentStory, setCurrentStory] = useState<StoryData | null>(() => {
+    try {
+      const stored = localStorage.getItem('latestStory');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.warn('Failed to load story from localStorage:', error);
+    }
+    return null;
+  });
   const [language, setLanguage] = useState<string>("english");
-  const [topic, setTopic] = useState<string>("saving money");
 
   const handleStoryGenerated = (story: StoryData) => {
     setCurrentStory(story);
@@ -27,18 +37,16 @@ const Index = () => {
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         <UserSettings 
           onLanguageChange={setLanguage}
-          onTopicChange={setTopic}
         />
         
         <StoryGenerator 
           onStoryGenerated={handleStoryGenerated}
           language={language}
-          topic={topic}
         />
         
         {currentStory && <StoryCard story={currentStory} />}
         
-        <VoiceNarration />
+        <VoiceNarration story={currentStory} language={language} />
         
         {currentStory && (
           <InteractiveQuestion 

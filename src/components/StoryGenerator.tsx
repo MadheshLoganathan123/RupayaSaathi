@@ -14,13 +14,11 @@ interface StoryData {
 interface StoryGeneratorProps {
   onStoryGenerated?: (story: StoryData) => void;
   language?: string;
-  topic?: string;
 }
 
 const StoryGenerator = ({ 
   onStoryGenerated, 
-  language = 'english', 
-  topic = 'saving money' 
+  language = 'english'
 }: StoryGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -29,14 +27,13 @@ const StoryGenerator = ({
     setIsGenerating(true);
 
     try {
-      const response = await fetch('/api/generateStory', {
+      const response = await fetch('/api/story', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           language,
-          topic,
         }),
       });
 
@@ -50,6 +47,13 @@ const StoryGenerator = ({
       // Validate response structure
       if (!storyData.title || !storyData.story || !storyData.question || !storyData.options) {
         throw new Error('Invalid story data received from server');
+      }
+
+      // Store in localStorage as latestStory
+      try {
+        localStorage.setItem('latestStory', JSON.stringify(storyData));
+      } catch (storageError) {
+        console.warn('Failed to save story to localStorage:', storageError);
       }
 
       // Call callback if provided
@@ -73,11 +77,41 @@ const StoryGenerator = ({
     }
   };
 
+  const handleTestAPI = async () => {
+    try {
+      const response = await fetch('/api/story', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          test: true,
+        }),
+      });
+
+      const result = await response.json();
+      
+      toast({
+        title: result.message || "API Test",
+        description: result.status === 'connected' 
+          ? "DeepSeek API is reachable and working!" 
+          : "Check your API key configuration.",
+        variant: result.status === 'connected' ? 'default' : 'destructive',
+      });
+    } catch (error) {
+      toast({
+        title: "Test Failed",
+        description: error instanceof Error ? error.message : "Failed to test API connection.",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="text-center space-y-4">
       <Button
         size="lg"
-        className="w-full h-14 text-lg gap-2"
+        className="w-full h-14 text-lg gap-2 touch-manipulation"
         onClick={handleGenerate}
         disabled={isGenerating}
       >
@@ -99,6 +133,16 @@ const StoryGenerator = ({
           Creating your personalized financial story...
         </p>
       )}
+
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-full h-10 text-sm touch-manipulation"
+        onClick={handleTestAPI}
+        disabled={isGenerating}
+      >
+        Test API Connection
+      </Button>
     </div>
   );
 };

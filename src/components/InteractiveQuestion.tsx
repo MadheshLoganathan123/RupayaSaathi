@@ -34,14 +34,14 @@ const InteractiveQuestion = ({ question, options, correctAnswer }: InteractiveQu
               <Button
                 key={index}
                 variant="outline"
-                className="w-full h-auto py-4 px-4 text-left justify-start hover:bg-primary hover:text-primary-foreground transition-colors"
+                className="w-full h-auto min-h-[56px] py-4 px-4 text-left justify-start hover:bg-primary hover:text-primary-foreground transition-colors touch-manipulation text-base"
                 onClick={() => handleOptionClick(index)}
                 disabled={showFeedback}
               >
-                <span className="font-semibold mr-2">
+                <span className="font-semibold mr-2 text-lg">
                   {String.fromCharCode(65 + index)}.
                 </span>
-                <span>{option}</span>
+                <span className="flex-1">{option}</span>
               </Button>
             ))}
           </div>
@@ -57,12 +57,12 @@ const InteractiveQuestion = ({ question, options, correctAnswer }: InteractiveQu
               {isCorrect ? (
                 <>
                   <CheckCircle className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium">Correct! Great job!</span>
+                  <span className="font-medium">Correct! 🎉</span>
                 </>
               ) : (
                 <>
                   <XCircle className="w-5 h-5 flex-shrink-0" />
-                  <span className="font-medium">Not quite. Try again!</span>
+                  <span className="font-medium">Try Again 😅</span>
                 </>
               )}
             </div>

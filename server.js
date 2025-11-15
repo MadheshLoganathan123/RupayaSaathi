@@ -67,12 +67,15 @@ function createVercelHandler(handlerName) {
 
 // API route handlers
 app.all('/api/generateStory', createVercelHandler('generateStory'));
+app.all('/api/story', createVercelHandler('story'));
 app.all('/api/checkAnswer', createVercelHandler('checkAnswer'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Local API server running on http://localhost:${PORT}`);
   console.log(`📡 API endpoints:`);
   console.log(`   - http://localhost:${PORT}/api/generateStory`);
+  console.log(`   - http://localhost:${PORT}/api/story`);
   console.log(`   - http://localhost:${PORT}/api/checkAnswer`);
+  console.log(`💡 Make sure to set OPENROUTER_API_KEY in your .env file`);
 });
 

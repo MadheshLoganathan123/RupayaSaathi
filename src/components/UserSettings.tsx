@@ -8,13 +8,11 @@ import { useState } from "react";
 
 interface UserSettingsProps {
   onLanguageChange?: (language: string) => void;
-  onTopicChange?: (topic: string) => void;
 }
 
-const UserSettings = ({ onLanguageChange, onTopicChange }: UserSettingsProps) => {
+const UserSettings = ({ onLanguageChange }: UserSettingsProps) => {
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [language, setLanguage] = useState<string>("english");
-  const [topic, setTopic] = useState<string>("saving money");
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -26,13 +24,6 @@ const UserSettings = ({ onLanguageChange, onTopicChange }: UserSettingsProps) =>
     setLanguage(value);
     if (onLanguageChange) {
       onLanguageChange(value);
-    }
-  };
-
-  const handleTopicChange = (value: string) => {
-    setTopic(value);
-    if (onTopicChange) {
-      onTopicChange(value);
     }
   };
 
@@ -58,19 +49,6 @@ const UserSettings = ({ onLanguageChange, onTopicChange }: UserSettingsProps) =>
               <SelectItem value="tamil">தமிழ் (Tamil)</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-
-        <div>
-          <Label className="text-sm font-medium text-foreground mb-1 block">
-            Story Topic
-          </Label>
-          <Input
-            value={topic}
-            onChange={(e) => handleTopicChange(e.target.value)}
-            placeholder="e.g., saving money, budgeting, investing"
-            className="w-full h-12"
-            maxLength={100}
-          />
         </div>
 
         <div>
