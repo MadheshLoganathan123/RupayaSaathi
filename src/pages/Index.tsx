@@ -5,11 +5,12 @@ import StoryGenerator, { StoryData } from "@/components/StoryGenerator";
 import StoryCard from "@/components/StoryCard";
 import VoiceNarration from "@/components/VoiceNarration";
 import InteractiveQuestion from "@/components/InteractiveQuestion";
-import ScoreDisplay from "@/components/ScoreDisplay";
+import ProgressDashboard from "@/components/ProgressDashboard";
 import ProgressTracker from "@/components/ProgressTracker";
 import DailyBadge from "@/components/DailyBadge";
 import StoryHistory from "@/components/StoryHistory";
 import Footer from "@/components/Footer";
+import useProgress from "@/hooks/useProgress";
 
 const Index = () => {
   // Load latest stories array and current index from localStorage on mount
@@ -33,15 +34,7 @@ const Index = () => {
     return 0;
   });
   const [language, setLanguage] = useState<string>("english");
-  const [scoreStats, setScoreStats] = useState<{ attempts: number; correct: number }>(() => {
-    try {
-      const stored = localStorage.getItem('scoreStats');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.warn('Failed to load scoreStats from localStorage', e);
-    }
-    return { attempts: 0, correct: 0 };
-  });
+  const { stats, accuracy, progressPercent, resetForNewBatch, updateScore, markStoryCompleted } = useProgress();
 
   // key to force remounting question component when story changes
   const [questionKey, setQuestionKey] = useState<number>(0);
@@ -51,29 +44,27 @@ const Index = () => {
     setStories(newStories);
     setCurrentIndex(0);
     try { localStorage.setItem('latestStories', JSON.stringify(newStories)); localStorage.setItem('latestStoryIndex', '0'); } catch (e) { console.warn('Failed to persist stories', e); }
+    resetForNewBatch(newStories.length);
     // reset question UI
     setQuestionKey(k => k + 1);
     setEndMessage(null);
   };
 
   const handleAnswer = (correct: boolean) => {
-    setScoreStats(prev => {
-      const updated = { attempts: prev.attempts + 1, correct: prev.correct + (correct ? 1 : 0) };
-      try { localStorage.setItem('scoreStats', JSON.stringify(updated)); } catch (e) { console.warn('Failed to save scoreStats', e); }
-      return updated;
-    });
+    updateScore(correct);
   };
 
   // Advance to next story index (used by narration or UI)
   const handleAdvanceIndex = (advance = 1) => {
     setCurrentIndex(prev => {
-      const next = prev + advance;
-      if (next >= stories.length) {
-        // show small message
+      const next = Math.min(prev + advance, stories.length - 1);
+      if (next === prev) {
+        if (stories.length === 0) return prev;
         setEndMessage('No more stories — generate again');
         setTimeout(() => setEndMessage(null), 3000);
-        return prev; // no change
+        return prev;
       }
+      markStoryCompleted();
       try { localStorage.setItem('latestStoryIndex', String(next)); } catch (e) {}
       setQuestionKey(k => k + 1);
       return next;
@@ -130,7 +121,7 @@ const Index = () => {
           <div className="text-center text-sm text-muted-foreground">Generate stories to begin.</div>
         )}
 
-        <ScoreDisplay stats={scoreStats} />
+        <ProgressDashboard stats={stats} accuracy={accuracy} progressPercent={progressPercent} />
         
         <ProgressTracker />
         

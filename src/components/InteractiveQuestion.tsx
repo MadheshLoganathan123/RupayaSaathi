@@ -7,24 +7,33 @@ interface InteractiveQuestionProps {
   question: string;
   options: string[];
   correctAnswer: number;
-  onAnswer?: (correct: boolean) => void;
+  onAnswer?: (isCorrect: boolean) => void;
 }
 
-const InteractiveQuestion = ({ question, options, correctAnswer }: InteractiveQuestionProps) => {
+const InteractiveQuestion = ({ question, options, correctAnswer, onAnswer }: InteractiveQuestionProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [feedback, setFeedback] = useState<"correct" | "wrong" | null>(null);
 
   const handleOptionClick = (index: number) => {
+    if (showFeedback) return;
+    const isCorrect = index === correctAnswer;
     setSelectedOption(index);
     setShowFeedback(true);
-    const correct = index === correctAnswer;
-    if (onAnswer) onAnswer(correct);
+    setFeedback(isCorrect ? "correct" : "wrong");
+    onAnswer?.(isCorrect);
   };
 
   const isCorrect = selectedOption === correctAnswer;
 
+  const feedbackClass = feedback
+    ? feedback === "correct"
+      ? "ring-2 ring-success/70 shadow-[0_0_25px_rgba(34,197,94,0.35)]"
+      : "ring-2 ring-destructive/70 shadow-[0_0_25px_rgba(239,68,68,0.35)]"
+    : "";
+
   return (
-    <Card className="p-6 space-y-4">
+    <Card className={`p-6 space-y-4 transition-all duration-200 ${feedbackClass}`}>
       <div className="flex items-start gap-2">
         <HelpCircle className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
         <div className="flex-1">

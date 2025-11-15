@@ -40,9 +40,40 @@ const StoryGenerator = ({
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const stories: StoryData[] = await response.json();
+      const data = await response.json();
+      
+      // Debug: Log the response to help diagnose issues
+      console.log('API Response:', data);
+      console.log('Response type:', Array.isArray(data) ? 'array' : typeof data);
+      
+      // Handle both array and single object responses
+      const stories: StoryData[] = Array.isArray(data) ? data : [data];
 
-      if (!Array.isArray(stories) || stories.length === 0) throw new Error('Invalid story data received from server');
+      // Validate that we have at least one story
+      if (stories.length === 0) {
+        console.error('No stories in response:', data);
+        throw new Error('No stories received from server');
+      }
+      
+      // Validate each story has required fields
+      const invalidStories = stories.filter((story, index) => {
+        const isValid = story && 
+          story.title && 
+          story.story && 
+          story.question && 
+          Array.isArray(story.options) && 
+          story.options.length >= 2;
+        
+        if (!isValid) {
+          console.error(`Story ${index} is invalid:`, story);
+        }
+        return !isValid;
+      });
+      
+      if (invalidStories.length > 0) {
+        console.error('Invalid stories found:', invalidStories);
+        throw new Error(`Invalid story data: ${invalidStories.length} story/stories missing required fields`);
+      }
 
       // Store in localStorage as latestStories and set index 0
       try {
