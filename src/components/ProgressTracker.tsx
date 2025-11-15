@@ -15,6 +15,8 @@ interface Milestone {
 
 const ProgressTracker = () => {
   const [showCelebration, setShowCelebration] = useState(false);
+  const [animatedWeeklyProgress, setAnimatedWeeklyProgress] = useState(0);
+  const [animatedMonthlyProgress, setAnimatedMonthlyProgress] = useState(0);
   
   // Mock data - would come from backend in real app
   const currentStreak = 7;
@@ -42,6 +44,28 @@ const ProgressTracker = () => {
       setTimeout(() => setShowCelebration(false), 600);
     }
   }, [achievedCount]);
+
+  // Animate progress bars from 0% to target values
+  useEffect(() => {
+    const duration = 1500; // 1.5 seconds
+    const steps = 60;
+    const stepDuration = duration / steps;
+    const weeklyStep = weeklyProgress / steps;
+    const monthlyStep = monthlyProgress / steps;
+
+    let currentStep = 0;
+    const interval = setInterval(() => {
+      currentStep++;
+      if (currentStep <= steps) {
+        setAnimatedWeeklyProgress(Math.min(weeklyProgress, weeklyStep * currentStep));
+        setAnimatedMonthlyProgress(Math.min(monthlyProgress, monthlyStep * currentStep));
+      } else {
+        clearInterval(interval);
+      }
+    }, stepDuration);
+
+    return () => clearInterval(interval);
+  }, [weeklyProgress, monthlyProgress]);
 
   return (
     <Card className="p-6 space-y-6 animate-fade-in">
@@ -121,9 +145,9 @@ const ProgressTracker = () => {
         <TabsContent value="weekly" className="space-y-3 mt-4">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-foreground">This Week's Progress</span>
-            <span className="text-muted-foreground">{weeklyProgress}%</span>
+            <span className="text-muted-foreground">{Math.round(animatedWeeklyProgress)}%</span>
           </div>
-          <Progress value={weeklyProgress} className="h-3" />
+          <Progress value={animatedWeeklyProgress} className="h-3" />
           <p className="text-xs text-muted-foreground">
             6 out of 7 stories completed this week! Great job! 🌟
           </p>
@@ -132,9 +156,9 @@ const ProgressTracker = () => {
         <TabsContent value="monthly" className="space-y-3 mt-4">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium text-foreground">This Month's Progress</span>
-            <span className="text-muted-foreground">{monthlyProgress}%</span>
+            <span className="text-muted-foreground">{Math.round(animatedMonthlyProgress)}%</span>
           </div>
-          <Progress value={monthlyProgress} className="h-3" />
+          <Progress value={animatedMonthlyProgress} className="h-3" />
           <p className="text-xs text-muted-foreground">
             24 out of 30 stories completed this month. Keep it up! 💪
           </p>

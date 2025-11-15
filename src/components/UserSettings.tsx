@@ -2,15 +2,38 @@ import { Settings, Moon, Sun } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useState } from "react";
 
-const UserSettings = () => {
+interface UserSettingsProps {
+  onLanguageChange?: (language: string) => void;
+  onTopicChange?: (topic: string) => void;
+}
+
+const UserSettings = ({ onLanguageChange, onTopicChange }: UserSettingsProps) => {
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [language, setLanguage] = useState<string>("english");
+  const [topic, setTopic] = useState<string>("saving money");
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
     setTheme(newTheme);
     document.documentElement.classList.toggle("dark");
+  };
+
+  const handleLanguageChange = (value: string) => {
+    setLanguage(value);
+    if (onLanguageChange) {
+      onLanguageChange(value);
+    }
+  };
+
+  const handleTopicChange = (value: string) => {
+    setTopic(value);
+    if (onTopicChange) {
+      onTopicChange(value);
+    }
   };
 
   return (
@@ -22,10 +45,10 @@ const UserSettings = () => {
 
       <div className="space-y-3">
         <div>
-          <label className="text-sm font-medium text-foreground mb-1 block">
+          <Label className="text-sm font-medium text-foreground mb-1 block">
             Language
-          </label>
-          <Select defaultValue="english">
+          </Label>
+          <Select value={language} onValueChange={handleLanguageChange}>
             <SelectTrigger className="w-full h-12">
               <SelectValue />
             </SelectTrigger>
@@ -38,9 +61,22 @@ const UserSettings = () => {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-foreground mb-1 block">
+          <Label className="text-sm font-medium text-foreground mb-1 block">
+            Story Topic
+          </Label>
+          <Input
+            value={topic}
+            onChange={(e) => handleTopicChange(e.target.value)}
+            placeholder="e.g., saving money, budgeting, investing"
+            className="w-full h-12"
+            maxLength={100}
+          />
+        </div>
+
+        <div>
+          <Label className="text-sm font-medium text-foreground mb-1 block">
             Difficulty Level
-          </label>
+          </Label>
           <Select defaultValue="beginner">
             <SelectTrigger className="w-full h-12">
               <SelectValue />
@@ -54,9 +90,9 @@ const UserSettings = () => {
         </div>
 
         <div>
-          <label className="text-sm font-medium text-foreground mb-1 block">
+          <Label className="text-sm font-medium text-foreground mb-1 block">
             Theme
-          </label>
+          </Label>
           <Button
             variant="outline"
             className="w-full h-12 justify-start gap-2"

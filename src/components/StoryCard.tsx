@@ -1,25 +1,30 @@
 import { RotateCcw, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { StoryData } from "./StoryGenerator";
 
-const StoryCard = () => {
+interface StoryCardProps {
+  story: StoryData;
+}
+
+const StoryCard = ({ story }: StoryCardProps) => {
+  // Split story into paragraphs for better display
+  const storyParagraphs = story.story.split(/\n\n|\n/).filter(p => p.trim());
+
   return (
     <Card className="p-6 space-y-4">
       <div>
         <h3 className="text-xl font-bold text-foreground mb-3">
-          The Smart Savings Story
+          {story.title}
         </h3>
-        <div className="text-foreground leading-relaxed space-y-2">
-          <p>
-            Rohan wanted to buy a new bicycle. His father told him, "Save a
-            little every day, and soon you'll have enough."
-          </p>
-          <p>
-            Rohan started saving ₹10 every day from his pocket money. After 30
-            days, he had ₹300. He felt proud and learned that small savings can
-            grow into big goals.
-          </p>
-        </div>
+        <ScrollArea className="h-48 w-full pr-4">
+          <div className="text-foreground leading-relaxed space-y-2">
+            {storyParagraphs.map((paragraph, index) => (
+              <p key={index}>{paragraph}</p>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
 
       <div className="flex gap-3 pt-2">

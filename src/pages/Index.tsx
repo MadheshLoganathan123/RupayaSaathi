@@ -1,29 +1,54 @@
+import { useState } from "react";
 import Header from "@/components/Header";
 import UserSettings from "@/components/UserSettings";
-import StoryGenerator from "@/components/StoryGenerator";
+import StoryGenerator, { StoryData } from "@/components/StoryGenerator";
 import StoryCard from "@/components/StoryCard";
 import VoiceNarration from "@/components/VoiceNarration";
 import InteractiveQuestion from "@/components/InteractiveQuestion";
+import ScoreDisplay from "@/components/ScoreDisplay";
 import ProgressTracker from "@/components/ProgressTracker";
 import DailyBadge from "@/components/DailyBadge";
 import StoryHistory from "@/components/StoryHistory";
 import Footer from "@/components/Footer";
 
 const Index = () => {
+  const [currentStory, setCurrentStory] = useState<StoryData | null>(null);
+  const [language, setLanguage] = useState<string>("english");
+  const [topic, setTopic] = useState<string>("saving money");
+
+  const handleStoryGenerated = (story: StoryData) => {
+    setCurrentStory(story);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
       
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
-        <UserSettings />
+        <UserSettings 
+          onLanguageChange={setLanguage}
+          onTopicChange={setTopic}
+        />
         
-        <StoryGenerator />
+        <StoryGenerator 
+          onStoryGenerated={handleStoryGenerated}
+          language={language}
+          topic={topic}
+        />
         
-        <StoryCard />
+        {currentStory && <StoryCard story={currentStory} />}
         
         <VoiceNarration />
         
-        <InteractiveQuestion />
+        {currentStory && (
+          <InteractiveQuestion 
+            question={currentStory.question}
+            options={currentStory.options}
+            correctAnswer={currentStory.correct}
+          />
+        )}
+        
+        <ScoreDisplay />
         
         <ProgressTracker />
         

@@ -1,14 +1,76 @@
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
-const StoryGenerator = () => {
+interface StoryData {
+  title: string;
+  story: string;
+  question: string;
+  options: string[];
+  correct: number;
+}
+
+interface StoryGeneratorProps {
+  onStoryGenerated?: (story: StoryData) => void;
+  language?: string;
+  topic?: string;
+}
+
+const StoryGenerator = ({ 
+  onStoryGenerated, 
+  language = 'english', 
+  topic = 'saving money' 
+}: StoryGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
+  const { toast } = useToast();
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     setIsGenerating(true);
-    // Simulate generation
-    setTimeout(() => setIsGenerating(false), 2000);
+
+    try {
+      const response = await fetch('/api/generateStory', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          language,
+          topic,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const storyData: StoryData = await response.json();
+
+      // Validate response structure
+      if (!storyData.title || !storyData.story || !storyData.question || !storyData.options) {
+        throw new Error('Invalid story data received from server');
+      }
+
+      // Call callback if provided
+      if (onStoryGenerated) {
+        onStoryGenerated(storyData);
+      }
+
+      toast({
+        title: "Story Generated!",
+        description: `"${storyData.title}" has been created successfully.`,
+      });
+    } catch (error) {
+      console.error('Error generating story:', error);
+      toast({
+        title: "Generation Failed",
+        description: error instanceof Error ? error.message : "Failed to generate story. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -42,3 +104,4 @@ const StoryGenerator = () => {
 };
 
 export default StoryGenerator;
+export type { StoryData };
