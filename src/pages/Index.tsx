@@ -4,7 +4,7 @@ import StoryGenerator from "@/components/StoryGenerator";
 import StoryCard from "@/components/StoryCard";
 import VoiceNarration from "@/components/VoiceNarration";
 import InteractiveQuestion from "@/components/InteractiveQuestion";
-import ScoreProgress from "@/components/ScoreProgress";
+import ProgressTracker from "@/components/ProgressTracker";
 import DailyBadge from "@/components/DailyBadge";
 import StoryHistory from "@/components/StoryHistory";
 import Footer from "@/components/Footer";
@@ -25,7 +25,7 @@ const Index = () => {
         
         <InteractiveQuestion />
         
-        <ScoreProgress />
+        <ProgressTracker />
         
         <DailyBadge />
         
