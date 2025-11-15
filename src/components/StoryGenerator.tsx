@@ -12,13 +12,15 @@ interface StoryData {
 }
 
 interface StoryGeneratorProps {
-  onStoryGenerated?: (story: StoryData) => void;
+  onStoriesGenerated?: (stories: StoryData[]) => void;
   language?: string;
+  count?: number;
 }
 
 const StoryGenerator = ({ 
-  onStoryGenerated, 
-  language = 'english'
+  onStoriesGenerated, 
+  language = 'english',
+  count = 3
 }: StoryGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -29,12 +31,8 @@ const StoryGenerator = ({
     try {
       const response = await fetch('/api/story', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          language,
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language, numStories: count }),
       });
 
       if (!response.ok) {
@@ -42,29 +40,21 @@ const StoryGenerator = ({
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const storyData: StoryData = await response.json();
+      const stories: StoryData[] = await response.json();
 
-      // Validate response structure
-      if (!storyData.title || !storyData.story || !storyData.question || !storyData.options) {
-        throw new Error('Invalid story data received from server');
-      }
+      if (!Array.isArray(stories) || stories.length === 0) throw new Error('Invalid story data received from server');
 
-      // Store in localStorage as latestStory
+      // Store in localStorage as latestStories and set index 0
       try {
-        localStorage.setItem('latestStory', JSON.stringify(storyData));
+        localStorage.setItem('latestStories', JSON.stringify(stories));
+        localStorage.setItem('latestStoryIndex', '0');
       } catch (storageError) {
-        console.warn('Failed to save story to localStorage:', storageError);
+        console.warn('Failed to save stories to localStorage:', storageError);
       }
 
-      // Call callback if provided
-      if (onStoryGenerated) {
-        onStoryGenerated(storyData);
-      }
+      if (onStoriesGenerated) onStoriesGenerated(stories);
 
-      toast({
-        title: "Story Generated!",
-        description: `"${storyData.title}" has been created successfully.`,
-      });
+      toast({ title: 'Stories Generated!', description: `Created ${stories.length} stories.` });
     } catch (error) {
       console.error('Error generating story:', error);
       toast({

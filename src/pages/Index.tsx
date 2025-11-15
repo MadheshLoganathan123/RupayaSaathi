@@ -12,22 +12,79 @@ import StoryHistory from "@/components/StoryHistory";
 import Footer from "@/components/Footer";
 
 const Index = () => {
-  // Load latest story from localStorage on mount
-  const [currentStory, setCurrentStory] = useState<StoryData | null>(() => {
+  // Load latest stories array and current index from localStorage on mount
+  const [stories, setStories] = useState<StoryData[]>(() => {
     try {
-      const stored = localStorage.getItem('latestStory');
-      if (stored) {
-        return JSON.parse(stored);
-      }
+      const stored = localStorage.getItem('latestStories');
+      if (stored) return JSON.parse(stored);
     } catch (error) {
-      console.warn('Failed to load story from localStorage:', error);
+      console.warn('Failed to load stories from localStorage:', error);
     }
-    return null;
+    return [];
+  });
+
+  const [currentIndex, setCurrentIndex] = useState<number>(() => {
+    try {
+      const idx = localStorage.getItem('latestStoryIndex');
+      if (idx) return Number(idx);
+    } catch (e) {
+      console.warn('Failed to load current index', e);
+    }
+    return 0;
   });
   const [language, setLanguage] = useState<string>("english");
+  const [scoreStats, setScoreStats] = useState<{ attempts: number; correct: number }>(() => {
+    try {
+      const stored = localStorage.getItem('scoreStats');
+      if (stored) return JSON.parse(stored);
+    } catch (e) {
+      console.warn('Failed to load scoreStats from localStorage', e);
+    }
+    return { attempts: 0, correct: 0 };
+  });
 
-  const handleStoryGenerated = (story: StoryData) => {
-    setCurrentStory(story);
+  // key to force remounting question component when story changes
+  const [questionKey, setQuestionKey] = useState<number>(0);
+  const [endMessage, setEndMessage] = useState<string | null>(null);
+
+  const handleStoriesGenerated = (newStories: StoryData[]) => {
+    setStories(newStories);
+    setCurrentIndex(0);
+    try { localStorage.setItem('latestStories', JSON.stringify(newStories)); localStorage.setItem('latestStoryIndex', '0'); } catch (e) { console.warn('Failed to persist stories', e); }
+    // reset question UI
+    setQuestionKey(k => k + 1);
+    setEndMessage(null);
+  };
+
+  const handleAnswer = (correct: boolean) => {
+    setScoreStats(prev => {
+      const updated = { attempts: prev.attempts + 1, correct: prev.correct + (correct ? 1 : 0) };
+      try { localStorage.setItem('scoreStats', JSON.stringify(updated)); } catch (e) { console.warn('Failed to save scoreStats', e); }
+      return updated;
+    });
+  };
+
+  // Advance to next story index (used by narration or UI)
+  const handleAdvanceIndex = (advance = 1) => {
+    setCurrentIndex(prev => {
+      const next = prev + advance;
+      if (next >= stories.length) {
+        // show small message
+        setEndMessage('No more stories — generate again');
+        setTimeout(() => setEndMessage(null), 3000);
+        return prev; // no change
+      }
+      try { localStorage.setItem('latestStoryIndex', String(next)); } catch (e) {}
+      setQuestionKey(k => k + 1);
+      return next;
+    });
+  };
+
+  const handleSetIndex = (index: number) => {
+    const clamped = Math.max(0, Math.min(index, stories.length - 1));
+    setCurrentIndex(clamped);
+    try { localStorage.setItem('latestStoryIndex', String(clamped)); } catch (e) {}
+    setQuestionKey(k => k + 1);
   };
 
   return (
@@ -40,23 +97,40 @@ const Index = () => {
         />
         
         <StoryGenerator 
-          onStoryGenerated={handleStoryGenerated}
+          onStoriesGenerated={handleStoriesGenerated}
           language={language}
+          count={3}
         />
-        
-        {currentStory && <StoryCard story={currentStory} />}
-        
-        <VoiceNarration story={currentStory} language={language} />
-        
-        {currentStory && (
-          <InteractiveQuestion 
-            question={currentStory.question}
-            options={currentStory.options}
-            correctAnswer={currentStory.correct}
-          />
+
+        {stories.length > 0 ? (
+          <>
+            <StoryCard story={stories[currentIndex]} />
+
+            {endMessage && (
+              <div className="mt-2 text-center text-sm text-muted-foreground">{endMessage}</div>
+            )}
+
+            <VoiceNarration
+              stories={stories}
+              currentIndex={currentIndex}
+              language={language}
+              onIndexChange={handleSetIndex}
+              onAdvance={handleAdvanceIndex}
+            />
+
+            <InteractiveQuestion
+              key={questionKey}
+              question={stories[currentIndex].question}
+              options={stories[currentIndex].options}
+              correctAnswer={stories[currentIndex].correct}
+              onAnswer={handleAnswer}
+            />
+          </>
+        ) : (
+          <div className="text-center text-sm text-muted-foreground">Generate stories to begin.</div>
         )}
-        
-        <ScoreDisplay />
+
+        <ScoreDisplay stats={scoreStats} />
         
         <ProgressTracker />
         

@@ -7,6 +7,7 @@ interface InteractiveQuestionProps {
   question: string;
   options: string[];
   correctAnswer: number;
+  onAnswer?: (correct: boolean) => void;
 }
 
 const InteractiveQuestion = ({ question, options, correctAnswer }: InteractiveQuestionProps) => {
@@ -16,6 +17,8 @@ const InteractiveQuestion = ({ question, options, correctAnswer }: InteractiveQu
   const handleOptionClick = (index: number) => {
     setSelectedOption(index);
     setShowFeedback(true);
+    const correct = index === correctAnswer;
+    if (onAnswer) onAnswer(correct);
   };
 
   const isCorrect = selectedOption === correctAnswer;
