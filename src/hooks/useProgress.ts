@@ -115,24 +115,6 @@ const useProgress = () => {
     },
     [setAndPersist]
   );
-    (isCorrect: boolean) => {
-      setAndPersist((prev) => {
-        const next = {
-          ...prev,
-          totalQuestionsAnswered: prev.totalQuestionsAnswered + 1,
-          correctAnswers: prev.correctAnswers + (isCorrect ? 1 : 0),
-          incorrectAnswers: prev.incorrectAnswers + (isCorrect ? 0 : 1),
-          score: Math.max(0, prev.score + (isCorrect ? 10 : 0)),
-        };
-        console.log("[Progress] question answered", {
-          isCorrect,
-          totalQuestionsAnswered: next.totalQuestionsAnswered,
-        });
-        return next;
-      });
-    },
-    [setAndPersist]
-  );
 
   const markStoryCompleted = useCallback((difficulty: string = "easy") => {
     const today = new Date().toISOString().split('T')[0];
@@ -162,22 +144,6 @@ const useProgress = () => {
         storyDifficultyStats: nextDifficultyStats,
       };
       console.log("[Progress] story completed", { nextCompleted, daily: nextDailyCompleted });
-      return next;
-    });
-  }, [setAndPersist]);
-    setAndPersist((prev) => {
-      if (prev.totalStoriesGenerated === 0) return prev;
-      const nextCompleted = Math.min(prev.totalStoriesGenerated, prev.storiesCompleted + 1);
-      if (nextCompleted === prev.storiesCompleted) return prev;
-      const progressPercent = Math.min(
-        100,
-        (nextCompleted / prev.totalStoriesGenerated) * 100
-      );
-      const next = {
-        ...prev,
-        storiesCompleted: nextCompleted,
-      };
-      console.log("[Progress] story completed", { nextCompleted, progressPercent });
       return next;
     });
   }, [setAndPersist]);

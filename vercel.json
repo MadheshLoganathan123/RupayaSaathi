@@ -11,6 +11,10 @@
   ],
   "routes": [
     {
+      "src": "/api/story",
+      "dest": "/api/story.js"
+    },
+    {
       "src": "/api/generateStory",
       "dest": "/api/generateStory.js"
     },

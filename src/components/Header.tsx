@@ -1,4 +1,5 @@
 import { BookOpen } from "lucide-react";
+import { Button } from "./ui/button";
 
 interface HeaderProps {
   username?: string;
@@ -11,7 +12,6 @@ const Header = ({ username }: HeaderProps) => {
     window.location.reload(); 
   };
 
-  return (
   return (
     <header className="bg-card border-b border-border py-4 px-4 shadow-sm">
       <div className="max-w-2xl mx-auto flex justify-between items-center">

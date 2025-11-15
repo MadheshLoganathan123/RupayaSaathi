@@ -86,7 +86,7 @@ export default async function handler(req, res) {
     // If nothing generated, build deterministic fallback array
     if (!generated || generated.trim().length === 0) {
       const base = sanitizedTopic.split(' ')[0] || 'Lesson';
-      const templates: Record<string, (i:number)=>any> = {
+      const templates = {
         english: (i) => ({ title: `${base} ${i+1}`, story: `Once there was a child who learned about ${sanitizedTopic}. They saved a little each week and noticed the difference.`, question: 'What was the best choice the child made?', options: ['Saved money regularly','Spent all money immediately'], correct: 0 }),
         hindi: (i) => ({ title: `${base} ${i+1}`, story: `एक बच्चे ने ${sanitizedTopic} के बारे में सीखा। उसने हर हफ्ते थोड़ा बचाया और फर्क देखा।`, question: 'बच्चे ने सबसे अच्छा क्या किया?', options: ['नियमित रूप से पैसे बचाए','सारे पैसे तुरंत खर्च किए'], correct: 0 }),
         tamil: (i) => ({ title: `${base} ${i+1}`, story: `${sanitizedTopic} பற்றி ஒரு குழந்தை கற்றுக் கொண்டது. அது வாரம் சிறிது சேமித்தது மற்றும் மாற்றத்தை கண்டது.`, question: 'இந்தக் கதையில் சிறுவன் செய்த சிறந்த செயல் எது?', options: ['பணம் சேமித்தது','அனைத்து பணத்தையும் உடனே செலவு செய்தது'], correct: 0 })
@@ -97,7 +97,7 @@ export default async function handler(req, res) {
     }
 
     // Try to parse generated output as JSON array/object
-    let parsed: any = null;
+    let parsed = null;
     try { parsed = JSON.parse(generated.trim()); } catch (e) {
       // try to extract array from text
       const arrayMatch = generated.match(/\[[\s\S]*?\]/);
@@ -117,11 +117,11 @@ export default async function handler(req, res) {
 
     const items = Array.isArray(parsed) ? parsed : [parsed];
 
-    const normalize = (p: any) => ({
+    const normalize = (p) => ({
       title: String(p.title || 'Financial Lesson').trim().slice(0,100),
       story: String(p.story || '').trim().slice(0,1000),
       question: String(p.question || 'What is the best choice?').trim().slice(0,200),
-      options: Array.isArray(p.options) && p.options.length >= 2 ? p.options.slice(0,2).map((o:any)=>String(o).trim().slice(0,200)) : ['Option A','Option B'],
+      options: Array.isArray(p.options) && p.options.length >= 2 ? p.options.slice(0,2).map((o)=>String(o).trim().slice(0,200)) : ['Option A','Option B'],
       correct: p.correct === 1 || p.correct === '1' ? 1 : 0
     });
 
