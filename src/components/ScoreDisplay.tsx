@@ -1,4 +1,6 @@
 import { Card } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Award, Target, CheckCircle, TrendingUp } from "lucide-react";
 
 interface ScoreStats {
   attempts: number;
@@ -11,33 +13,51 @@ interface ScoreDisplayProps {
 
 const ScoreDisplay = ({ stats }: ScoreDisplayProps) => {
   const { attempts = 0, correct = 0 } = stats ?? {};
-  const accuracy = attempts > 0 ? (correct / attempts) * 100 : 0;
+  const accuracy = attempts > 0 ? Math.round((correct / attempts) * 100) : 0;
+  const progressPercent = attempts > 0 ? Math.min(100, (attempts / 50) * 100) : 0;
 
   return (
-    <Card className="p-4 space-y-2">
-      <div className="flex flex-col items-center space-y-1">
-        <span className="text-sm uppercase tracking-wider text-muted-foreground">
-          Progress Tracker
-        </span>
-        <span className="text-3xl font-bold text-foreground">{correct}</span>
-        <span className="text-xs text-muted-foreground">Correct Answers</span>
+    <Card className="p-6 space-y-6">
+      <div className="flex items-center gap-2 pb-4 border-b">
+        <Award className="w-6 h-6 text-primary" />
+        <h2 className="text-xl font-bold text-foreground">Your Progress</h2>
       </div>
 
-      <div className="grid grid-cols-3 gap-4 text-center text-sm">
-        <div>
-          <p className="text-foreground font-semibold">{attempts}</p>
-          <p className="text-muted-foreground">Attempts</p>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <Target className="w-4 h-4" />
+            <span>Questions Answered</span>
+          </div>
+          <p className="text-3xl font-bold text-foreground">{attempts}</p>
         </div>
-        <div>
-          <p className="text-foreground font-semibold">{correct}</p>
-          <p className="text-muted-foreground">Correct</p>
+
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <CheckCircle className="w-4 h-4" />
+            <span>Correct Answers</span>
+          </div>
+          <p className="text-3xl font-bold text-success">{correct}</p>
         </div>
-        <div>
-          <p className="text-foreground font-semibold">
-            {accuracy.toFixed(1)}%
-          </p>
-          <p className="text-muted-foreground">Accuracy</p>
+
+        <div className="space-y-2 col-span-2">
+          <div className="flex items-center gap-2 text-muted-foreground text-sm">
+            <TrendingUp className="w-4 h-4" />
+            <span>Accuracy Rate</span>
+          </div>
+          <p className="text-3xl font-bold text-primary">{accuracy}%</p>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-muted-foreground">Session Progress</span>
+          <span className="font-medium text-foreground">{Math.round(progressPercent)}%</span>
+        </div>
+        <Progress value={progressPercent} className="h-3" />
+        <p className="text-xs text-muted-foreground text-center">
+          Keep learning! Answer 50 questions to complete your session.
+        </p>
       </div>
     </Card>
   );

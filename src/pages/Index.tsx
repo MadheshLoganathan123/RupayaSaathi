@@ -99,7 +99,7 @@ const Index = () => {
         <StoryGenerator 
           onStoriesGenerated={handleStoriesGenerated}
           language={language}
-          count={3}
+          count={5}
         />
 
         {stories.length > 0 ? (

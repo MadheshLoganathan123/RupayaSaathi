@@ -150,11 +150,9 @@ const VoiceNarration = ({ stories = [], currentIndex = 0, language = 'english', 
     }
   };
 
-  // Auto-play when currentIndex changes
+  // Auto-play when currentIndex changes (removed to prevent auto-play on mount)
   useEffect(() => {
-    if (!stories || stories.length === 0) return;
-    // Auto-play the newly selected story
-    speakCurrentStory(currentIndex);
+    // Removed auto-play to prevent issues - users can manually start narration
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIndex, stories]);
 

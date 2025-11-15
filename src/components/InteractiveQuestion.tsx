@@ -10,7 +10,7 @@ interface InteractiveQuestionProps {
   onAnswer?: (correct: boolean) => void;
 }
 
-const InteractiveQuestion = ({ question, options, correctAnswer }: InteractiveQuestionProps) => {
+const InteractiveQuestion = ({ question, options, correctAnswer, onAnswer }: InteractiveQuestionProps) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
 
