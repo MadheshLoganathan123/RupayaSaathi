@@ -20,7 +20,7 @@ interface StoryGeneratorProps {
 const StoryGenerator = ({ 
   onStoriesGenerated, 
   language = 'english',
-  count = 3
+  count = 5
 }: StoryGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();

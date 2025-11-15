@@ -42,9 +42,9 @@ export default async function handler(req, res) {
 
     const sanitizedTopic = String(topic || 'saving money').trim().slice(0, 100).replace(/[<>"']/g, '');
 
-    const requestedCount = Math.max(1, Math.min(10, Number(numStories || 1)));
+    const requestedCount = Math.max(5, Math.min(10, Number(numStories || 5)));
 
-    const prompt = `You are an assistant that writes short, simple financial-lesson stories for learners.\nReturn a JSON ARRAY with exactly ${requestedCount} objects.\nEach object MUST use the EXACT keys: title, story, question, options, correct.\n- title: short title string (max 6 words)\n- story: very short story (1-4 sentences), simple language for ${lang}\n- question: one question about the story (single sentence)\n- options: array of two option strings [optionA, optionB]\n- correct: integer 0 or 1 indicating the correct option index\n\nLanguage: ${lang}\nTopic hint: ${sanitizedTopic}\n\nReturn only a JSON array.`;
+    const prompt = `You are an assistant that writes short, simple financial-lesson stories for learners.\nReturn a JSON ARRAY with exactly ${requestedCount} objects.\nEach object MUST use the EXACT keys: title, story, question, options, correct.\n- title: short title string (max 6 words)\n- story: very short story (1-4 sentences), simple language for ${lang}\n- question: one question about the story (single sentence)\n- options: array of exactly 10 option strings (10 choices for each question)\n- correct: integer from 0-9 indicating the correct option index\n\nLanguage: ${lang}\nTopic hint: ${sanitizedTopic}\n\nReturn only a JSON array with ${requestedCount} complete story objects.`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     let generated = '';
@@ -60,7 +60,7 @@ export default async function handler(req, res) {
             Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ model: 'deepseek/deepseek-chat', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 500 }),
+          body: JSON.stringify({ model: 'deepseek/deepseek-chat', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 3000 }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
