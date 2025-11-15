@@ -17,7 +17,8 @@ export default async function handler(req, res) {
     body = body || {};
 
     const { test = false } = body;
-    const { language = 'english', topic = 'saving money', numStories = 1 } = body;
+    const { language = 'english', numStories = 1, options } = body;
+    const { topic = 'saving money', difficulty = 'easy', length = 'short' } = options || {};
 
     // API Key test support (keeps previous behavior)
     if (test === true) {
@@ -41,10 +42,12 @@ export default async function handler(req, res) {
     if (!['english', 'hindi', 'tamil'].includes(lang)) return res.status(400).json({ error: 'Unsupported language. Use english, hindi or tamil.' });
 
     const sanitizedTopic = String(topic || 'saving money').trim().slice(0, 100).replace(/[<>"']/g, '');
+    const sanitizedDifficulty = String(difficulty || 'easy').trim().slice(0, 20);
+    const sanitizedLength = String(length || 'short').trim().slice(0, 20);
 
     const requestedCount = Math.max(5, Math.min(10, Number(numStories || 5)));
 
-    const prompt = `You are an assistant that writes short, simple financial-lesson stories for learners.\nReturn a JSON ARRAY with exactly ${requestedCount} objects.\nEach object MUST use the EXACT keys: title, story, question, options, correct.\n- title: short title string (max 6 words)\n- story: very short story (1-4 sentences), simple language for ${lang}\n- question: one question about the story (single sentence)\n- options: array of exactly 10 option strings (10 choices for each question)\n- correct: integer from 0-9 indicating the correct option index\n\nLanguage: ${lang}\nTopic hint: ${sanitizedTopic}\n\nReturn only a JSON array with ${requestedCount} complete story objects.`;
+    const prompt = `You are an assistant that writes short, simple financial-lesson stories for learners.\nReturn a JSON ARRAY with exactly ${requestedCount} objects.\nEach object MUST use the EXACT keys: title, story, question, options, correct.\n- title: short title string (max 6 words)\n- story: very short story (1-4 sentences), simple language for ${lang}\n- question: one question about the story (single sentence)\n- options: array of exactly 10 option strings (10 choices for each question)\n- correct: integer from 0-9 indicating the correct option index\n\nLanguage: ${lang}\nTopic hint: ${sanitizedTopic}\nDifficulty: ${sanitizedDifficulty}\nLength: ${sanitizedLength}\n\nReturn only a JSON array with ${requestedCount} complete story objects.`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     let generated = '';

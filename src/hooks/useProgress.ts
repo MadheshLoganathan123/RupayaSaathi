@@ -7,6 +7,10 @@ export interface ProgressStats {
   correctAnswers: number;
   incorrectAnswers: number;
   score: number;
+  // New fields for enhanced tracking
+  dailyStoriesCompleted: number;
+  lastCompletionDate: string | null;
+  storyDifficultyStats: Record<string, { completed: number; correctAnswers: number }>;
 }
 
 const STORAGE_KEY = "progressStats";
@@ -18,15 +22,25 @@ const DEFAULT_STATS: ProgressStats = {
   correctAnswers: 0,
   incorrectAnswers: 0,
   score: 0,
+  dailyStoriesCompleted: 0,
+  lastCompletionDate: null,
+  storyDifficultyStats: {},
 };
 
 const safeParseProgress = (): ProgressStats => {
+  const today = new Date().toISOString().split('T')[0];
   if (typeof window === "undefined") return DEFAULT_STATS;
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return DEFAULT_STATS;
     const data = JSON.parse(stored);
     if (typeof data !== "object" || data === null) return DEFAULT_STATS;
+
+    // Reset daily stats if the last completion was not today
+    if (data.lastCompletionDate !== today) {
+      data.dailyStoriesCompleted = 0;
+    }
+
     return {
       ...DEFAULT_STATS,
       ...data,
@@ -59,10 +73,14 @@ const useProgress = () => {
 
   const resetForNewBatch = useCallback(
     (storyCount: number) => {
-      setAndPersist(() => {
+      setAndPersist((prev) => {
         const next = {
-          ...DEFAULT_STATS,
+          ...prev,
           totalStoriesGenerated: Math.max(0, storyCount),
+          storiesCompleted: 0, // Reset completed count for the new batch
+          totalQuestionsAnswered: 0, // Reset question stats for the new batch
+          correctAnswers: 0,
+          incorrectAnswers: 0,
         };
         console.log("[Progress] reset for new batch", { storyCount: next.totalStoriesGenerated });
         return next;
@@ -72,6 +90,31 @@ const useProgress = () => {
   );
 
   const updateScore = useCallback(
+    (isCorrect: boolean, difficulty: string = "easy") => {
+      setAndPersist((prev) => {
+        const next = {
+          ...prev,
+          totalQuestionsAnswered: prev.totalQuestionsAnswered + 1,
+          correctAnswers: prev.correctAnswers + (isCorrect ? 1 : 0),
+          incorrectAnswers: prev.incorrectAnswers + (isCorrect ? 0 : 1),
+          score: Math.max(0, prev.score + (isCorrect ? 10 : 0)),
+          storyDifficultyStats: {
+            ...prev.storyDifficultyStats,
+            [difficulty]: {
+              completed: prev.storyDifficultyStats[difficulty]?.completed || 0,
+              correctAnswers: (prev.storyDifficultyStats[difficulty]?.correctAnswers || 0) + (isCorrect ? 1 : 0),
+            },
+          },
+        };
+        console.log("[Progress] question answered", {
+          isCorrect,
+          totalQuestionsAnswered: next.totalQuestionsAnswered,
+        });
+        return next;
+      });
+    },
+    [setAndPersist]
+  );
     (isCorrect: boolean) => {
       setAndPersist((prev) => {
         const next = {
@@ -91,7 +134,37 @@ const useProgress = () => {
     [setAndPersist]
   );
 
-  const markStoryCompleted = useCallback(() => {
+  const markStoryCompleted = useCallback((difficulty: string = "easy") => {
+    const today = new Date().toISOString().split('T')[0];
+    setAndPersist((prev) => {
+      if (prev.totalStoriesGenerated === 0) return prev;
+      const nextCompleted = Math.min(prev.totalStoriesGenerated, prev.storiesCompleted + 1);
+      if (nextCompleted === prev.storiesCompleted) return prev;
+
+      // Update daily stats
+      const isToday = prev.lastCompletionDate === today;
+      const nextDailyCompleted = isToday ? prev.dailyStoriesCompleted + 1 : 1;
+
+      // Update difficulty stats (mark story as completed)
+      const nextDifficultyStats = {
+        ...prev.storyDifficultyStats,
+        [difficulty]: {
+          completed: (prev.storyDifficultyStats[difficulty]?.completed || 0) + 1,
+          correctAnswers: prev.storyDifficultyStats[difficulty]?.correctAnswers || 0,
+        },
+      };
+
+      const next = {
+        ...prev,
+        storiesCompleted: nextCompleted,
+        dailyStoriesCompleted: nextDailyCompleted,
+        lastCompletionDate: today,
+        storyDifficultyStats: nextDifficultyStats,
+      };
+      console.log("[Progress] story completed", { nextCompleted, daily: nextDailyCompleted });
+      return next;
+    });
+  }, [setAndPersist]);
     setAndPersist((prev) => {
       if (prev.totalStoriesGenerated === 0) return prev;
       const nextCompleted = Math.min(prev.totalStoriesGenerated, prev.storiesCompleted + 1);
@@ -126,6 +199,9 @@ const useProgress = () => {
     resetForNewBatch,
     updateScore,
     markStoryCompleted,
+    // Expose new stats for components
+    dailyStoriesCompleted: stats.dailyStoriesCompleted,
+    storyDifficultyStats: stats.storyDifficultyStats,
   };
 };
 

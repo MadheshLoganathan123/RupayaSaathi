@@ -1,6 +1,7 @@
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { StoryOptions } from "./StoryOptionsForm";
 import { useToast } from "@/hooks/use-toast";
 
 interface StoryData {
@@ -9,18 +10,21 @@ interface StoryData {
   question: string;
   options: string[];
   correct: number;
+  difficulty: string;
 }
 
 interface StoryGeneratorProps {
   onStoriesGenerated?: (stories: StoryData[]) => void;
   language?: string;
   count?: number;
+  options: StoryOptions;
 }
 
 const StoryGenerator = ({ 
   onStoriesGenerated, 
   language = 'english',
-  count = 5
+  count = 5,
+  options
 }: StoryGeneratorProps) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -32,7 +36,7 @@ const StoryGenerator = ({
       const response = await fetch('/api/story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ language, numStories: count }),
+        body: JSON.stringify({ language, numStories: count, options }),
       });
 
       if (!response.ok) {

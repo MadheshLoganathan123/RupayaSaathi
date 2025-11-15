@@ -1,7 +1,9 @@
 import { useState } from "react";
 import Header from "@/components/Header";
+import { useNavigate } from "react-router-dom";
 import UserSettings from "@/components/UserSettings";
 import StoryGenerator, { StoryData } from "@/components/StoryGenerator";
+import StoryOptionsForm, { StoryOptions } from "@/components/StoryOptionsForm";
 import StoryCard from "@/components/StoryCard";
 import VoiceNarration from "@/components/VoiceNarration";
 import InteractiveQuestion from "@/components/InteractiveQuestion";
@@ -13,6 +15,16 @@ import Footer from "@/components/Footer";
 import useProgress from "@/hooks/useProgress";
 
 const Index = () => {
+  const navigate = useNavigate();
+  const user = localStorage.getItem("user");
+
+  // Redirect to login if user is not authenticated (though AuthWrapper should handle this)
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
+
+  const { username } = JSON.parse(user);
   // Load latest stories array and current index from localStorage on mount
   const [stories, setStories] = useState<StoryData[]>(() => {
     try {
@@ -34,7 +46,12 @@ const Index = () => {
     return 0;
   });
   const [language, setLanguage] = useState<string>("english");
-  const { stats, accuracy, progressPercent, resetForNewBatch, updateScore, markStoryCompleted } = useProgress();
+  const [storyOptions, setStoryOptions] = useState<StoryOptions>({
+    topic: 'personal finance',
+    difficulty: 'easy',
+    length: 'short',
+  });
+  const { stats, accuracy, progressPercent, dailyStoriesCompleted, storyDifficultyStats, resetForNewBatch, updateScore, markStoryCompleted } = useProgress();
 
   // key to force remounting question component when story changes
   const [questionKey, setQuestionKey] = useState<number>(0);
@@ -51,7 +68,9 @@ const Index = () => {
   };
 
   const handleAnswer = (correct: boolean) => {
-    updateScore(correct);
+    const currentStory = stories[currentIndex];
+    const difficulty = currentStory?.difficulty || "easy"; // Assuming StoryData has a difficulty field
+    updateScore(correct, difficulty);
   };
 
   // Advance to next story index (used by narration or UI)
@@ -64,7 +83,9 @@ const Index = () => {
         setTimeout(() => setEndMessage(null), 3000);
         return prev;
       }
-      markStoryCompleted();
+      const currentStory = stories[prev];
+      const difficulty = currentStory?.difficulty || "easy"; // Assuming StoryData has a difficulty field
+      markStoryCompleted(difficulty);
       try { localStorage.setItem('latestStoryIndex', String(next)); } catch (e) {}
       setQuestionKey(k => k + 1);
       return next;
@@ -80,17 +101,23 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
+      <Header username={username} />
       
       <main className="max-w-2xl mx-auto px-4 py-6 space-y-6">
         <UserSettings 
           onLanguageChange={setLanguage}
         />
         
+        <StoryOptionsForm
+          initialOptions={storyOptions}
+          onOptionsChange={setStoryOptions}
+        />
+        
         <StoryGenerator 
           onStoriesGenerated={handleStoriesGenerated}
           language={language}
           count={5}
+          options={storyOptions}
         />
 
         {stories.length > 0 ? (
@@ -121,7 +148,13 @@ const Index = () => {
           <div className="text-center text-sm text-muted-foreground">Generate stories to begin.</div>
         )}
 
-        <ProgressDashboard stats={stats} accuracy={accuracy} progressPercent={progressPercent} />
+        <ProgressDashboard 
+          stats={stats} 
+          accuracy={accuracy} 
+          progressPercent={progressPercent} 
+          dailyStoriesCompleted={dailyStoriesCompleted}
+          storyDifficultyStats={storyDifficultyStats}
+        />
         
         <ProgressTracker />
         
