@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import { useNavigate } from "react-router-dom";
 import UserSettings from "@/components/UserSettings";
@@ -13,6 +13,7 @@ import DailyBadge from "@/components/DailyBadge";
 import StoryHistory from "@/components/StoryHistory";
 import Footer from "@/components/Footer";
 import useProgress from "@/hooks/useProgress";
+import { recordStory, recordAnswer, updateStreak } from "@/hooks/useProgressStore";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -25,6 +26,11 @@ const Index = () => {
   }
 
   const { username } = JSON.parse(user);
+
+  // Update streak on first load of the day
+  useEffect(() => {
+    updateStreak();
+  }, []);
   // Load latest stories array and current index from localStorage on mount
   const [stories, setStories] = useState<StoryData[]>(() => {
     try {
@@ -69,8 +75,9 @@ const Index = () => {
 
   const handleAnswer = (correct: boolean) => {
     const currentStory = stories[currentIndex];
-    const difficulty = currentStory?.difficulty || "easy"; // Assuming StoryData has a difficulty field
+    const difficulty = (currentStory?.difficulty || storyOptions.difficulty) as "easy" | "medium" | "hard";
     updateScore(correct, difficulty);
+    recordAnswer(correct, difficulty);
   };
 
   // Advance to next story index (used by narration or UI)
@@ -84,8 +91,9 @@ const Index = () => {
         return prev;
       }
       const currentStory = stories[prev];
-      const difficulty = currentStory?.difficulty || "easy"; // Assuming StoryData has a difficulty field
+      const difficulty = (currentStory?.difficulty || storyOptions.difficulty) as "easy" | "medium" | "hard";
       markStoryCompleted(difficulty);
+      recordStory(difficulty);
       try { localStorage.setItem('latestStoryIndex', String(next)); } catch (e) {}
       setQuestionKey(k => k + 1);
       return next;

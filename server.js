@@ -69,6 +69,7 @@ function createVercelHandler(handlerName) {
 app.all('/api/generateStory', createVercelHandler('generateStory'));
 app.all('/api/story', createVercelHandler('story'));
 app.all('/api/checkAnswer', createVercelHandler('checkAnswer'));
+app.all('/api/checkKey', createVercelHandler('checkKey'));
 
 app.listen(PORT, () => {
   console.log(`🚀 Local API server running on http://localhost:${PORT}`);
@@ -76,6 +77,7 @@ app.listen(PORT, () => {
   console.log(`   - http://localhost:${PORT}/api/generateStory`);
   console.log(`   - http://localhost:${PORT}/api/story`);
   console.log(`   - http://localhost:${PORT}/api/checkAnswer`);
+  console.log(`   - http://localhost:${PORT}/api/checkKey`);
   console.log(`💡 Make sure to set OPENROUTER_API_KEY in your .env file`);
 });
 
