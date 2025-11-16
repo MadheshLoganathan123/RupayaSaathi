@@ -1,10 +1,11 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import bcrypt from "bcryptjs";
 
 const LoginPage = () => {
   const [username, setUsername] = useState("");
@@ -13,8 +14,8 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Simple, client-side authentication for demonstration
-  const handleLogin = (e: React.FormEvent) => {
+  // Client-side authentication with bcrypt validation
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -29,28 +30,50 @@ const LoginPage = () => {
       return;
     }
 
-    // Simulate an API call for authentication
-    setTimeout(() => {
-      setIsLoading(false);
-      
-      // In a real application, this would be a secure server-side check.
-      // For this simple app, we'll just check if the username is not empty.
-      if (username.trim().length > 0) {
-        // Store user info (username) in local storage
+    try {
+      // Get stored accounts
+      const accountsData = localStorage.getItem("rs_user_accounts");
+      const accounts = accountsData ? JSON.parse(accountsData) : [];
+
+      // Find user account
+      const account = accounts.find((acc: any) => acc.username === username.trim());
+
+      if (!account) {
+        toast({
+          title: "Login Failed",
+          description: "User not found. Please sign up first.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // Validate password with bcrypt
+      const isValid = await bcrypt.compare(password, account.password);
+
+      if (isValid) {
         localStorage.setItem("user", JSON.stringify({ username: username.trim() }));
         toast({
           title: "Login Successful",
-          description: `Welcome, ${username.trim()}!`,
+          description: `Welcome back, ${username.trim()}!`,
         });
-        navigate("/"); // Redirect to the main page
+        setTimeout(() => navigate("/"), 500);
       } else {
         toast({
           title: "Login Failed",
-          description: "Invalid credentials. Please try again.",
+          description: "Invalid password. Please try again.",
           variant: "destructive",
         });
       }
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: "Login Failed",
+        description: "An error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -93,6 +116,12 @@ const LoginPage = () => {
               {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm">
+            <span className="text-muted-foreground">Don't have an account? </span>
+            <Link to="/signup" className="text-primary hover:underline">
+              Create Account
+            </Link>
+          </div>
         </CardContent>
       </Card>
     </div>
