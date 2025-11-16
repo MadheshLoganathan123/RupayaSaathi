@@ -33,6 +33,25 @@ const StoryGenerator = ({
     setIsGenerating(true);
 
     try {
+      // Validate API key before making request
+      const testResponse = await fetch('/api/story', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ test: true }),
+      });
+
+      const testResult = await testResponse.json();
+      
+      if (testResult.status !== 'connected') {
+        toast({
+          title: "API Key Missing or Invalid",
+          description: "Please configure your OpenRouter API key to generate stories.",
+          variant: "destructive",
+        });
+        setIsGenerating(false);
+        return;
+      }
+
       const response = await fetch('/api/story', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

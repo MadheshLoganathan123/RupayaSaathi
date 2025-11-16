@@ -1,11 +1,14 @@
-import { BookOpen } from "lucide-react";
+import { BookOpen, TrendingUp } from "lucide-react";
 import { Button } from "./ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface HeaderProps {
   username?: string;
 }
 
 const Header = ({ username }: HeaderProps) => {
+  const navigate = useNavigate();
+
   const handleLogout = () => {
     localStorage.removeItem("user");
     // Simple page reload to trigger AuthWrapper redirect
@@ -21,14 +24,23 @@ const Header = ({ username }: HeaderProps) => {
         </div>
         <div className="flex items-center gap-4">
           {username && (
-            <span className="text-sm text-muted-foreground hidden sm:inline">
-              Welcome, <span className="font-semibold text-foreground">{username}</span>
-            </span>
-          )}
-          {username && (
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              Logout
-            </Button>
+            <>
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/progress")}
+                className="gap-2"
+              >
+                <TrendingUp className="w-4 h-4" />
+                <span className="hidden sm:inline">Progress</span>
+              </Button>
+              <span className="text-sm text-muted-foreground hidden sm:inline">
+                Welcome, <span className="font-semibold text-foreground">{username}</span>
+              </span>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                Logout
+              </Button>
+            </>
           )}
         </div>
       </div>
