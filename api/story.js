@@ -29,7 +29,7 @@ export default async function handler(req, res) {
         const resp = await fetch('https://openrouter.ai/api/v1/chat/completions', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ model: 'deepseek/deepseek-chat', messages: [{ role: 'user', content: 'test' }], max_tokens: 5 })
+          body: JSON.stringify({ model: 'deepseek/deepseek-r1', messages: [{ role: 'user', content: 'test' }], max_tokens: 5 })
         });
         if (resp.ok) return res.status(200).json({ message: 'DeepSeek API reachable.', apiKeyPresent: true, status: 'connected' });
         return res.status(200).json({ message: 'Invalid or missing API key.', apiKeyPresent: true, status: 'error', httpStatus: resp.status });
@@ -63,7 +63,7 @@ export default async function handler(req, res) {
             Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ model: 'deepseek/deepseek-chat', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 3000 }),
+          body: JSON.stringify({ model: 'deepseek/deepseek-r1', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 3000 }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);

@@ -121,6 +121,19 @@ const StoryGenerator = ({
     }
   };
 
+  const handleCheckKey = async () => {
+    try {
+      const response = await fetch('/api/checkKey', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const result = await response.json();
+      alert(result.status === 'ok' ? 'API Key is valid!' : 'API Key is invalid!');
+    } catch (error) {
+      alert('Failed to check API key');
+    }
+  };
+
   const handleTestAPI = async () => {
     try {
       const response = await fetch('/api/story', {
@@ -178,15 +191,26 @@ const StoryGenerator = ({
         </p>
       )}
 
-      <Button
-        variant="outline"
-        size="sm"
-        className="w-full h-10 text-sm touch-manipulation"
-        onClick={handleTestAPI}
-        disabled={isGenerating}
-      >
-        Test API Connection
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 h-10 text-sm touch-manipulation"
+          onClick={handleCheckKey}
+          disabled={isGenerating}
+        >
+          Check API Key
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex-1 h-10 text-sm touch-manipulation"
+          onClick={handleTestAPI}
+          disabled={isGenerating}
+        >
+          Test API Connection
+        </Button>
+      </div>
     </div>
   );
 };
