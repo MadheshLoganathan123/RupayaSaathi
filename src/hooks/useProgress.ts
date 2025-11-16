@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { getUserProgress, saveUserProgress, addProgressHistory } from "@/lib/database";
 
 export interface ProgressStats {
   totalStoriesGenerated: number;
@@ -7,7 +8,6 @@ export interface ProgressStats {
   correctAnswers: number;
   incorrectAnswers: number;
   score: number;
-  // New fields for enhanced tracking
   dailyStoriesCompleted: number;
   lastCompletionDate: string | null;
   storyDifficultyStats: Record<string, { completed: number; correctAnswers: number }>;
@@ -27,16 +27,40 @@ const DEFAULT_STATS: ProgressStats = {
   storyDifficultyStats: {},
 };
 
+const getCurrentUsername = (): string | null => {
+  try {
+    const user = localStorage.getItem("user");
+    if (user) {
+      const { username } = JSON.parse(user);
+      return username;
+    }
+  } catch (error) {
+    console.warn("Failed to get current username:", error);
+  }
+  return null;
+};
+
 const safeParseProgress = (): ProgressStats => {
   const today = new Date().toISOString().split('T')[0];
   if (typeof window === "undefined") return DEFAULT_STATS;
+  
+  const username = getCurrentUsername();
+  if (username) {
+    const dbProgress = getUserProgress(username);
+    if (dbProgress) {
+      if (dbProgress.lastCompletionDate !== today) {
+        dbProgress.dailyStoriesCompleted = 0;
+      }
+      return dbProgress;
+    }
+  }
+  
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (!stored) return DEFAULT_STATS;
     const data = JSON.parse(stored);
     if (typeof data !== "object" || data === null) return DEFAULT_STATS;
 
-    // Reset daily stats if the last completion was not today
     if (data.lastCompletionDate !== today) {
       data.dailyStoriesCompleted = 0;
     }
@@ -53,6 +77,24 @@ const safeParseProgress = (): ProgressStats => {
 
 const persistProgress = (next: ProgressStats) => {
   if (typeof window === "undefined") return;
+  
+  const username = getCurrentUsername();
+  if (username) {
+    saveUserProgress(username, next);
+    
+    const today = new Date().toISOString().split('T')[0];
+    const accuracy = next.totalQuestionsAnswered > 0 
+      ? (next.correctAnswers / next.totalQuestionsAnswered) * 100 
+      : 0;
+    
+    addProgressHistory(username, {
+      date: today,
+      storiesCompleted: next.storiesCompleted,
+      score: next.score,
+      accuracy: Math.round(accuracy)
+    });
+  }
+  
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   } catch (error) {
