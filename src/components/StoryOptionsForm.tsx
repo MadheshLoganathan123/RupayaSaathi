@@ -8,6 +8,7 @@ export interface StoryOptions {
   topic: string;
   difficulty: 'easy' | 'medium' | 'hard';
   length: 'short' | 'medium' | 'long';
+  mode: 'normal' | 'enhanced';
 }
 
 interface StoryOptionsFormProps {
@@ -38,6 +39,22 @@ const StoryOptionsForm = ({ initialOptions, onOptionsChange }: StoryOptionsFormP
             value={options.topic}
             onChange={(e) => handleChange('topic', e.target.value)}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="mode">Story Mode</Label>
+          <Select
+            value={options.mode}
+            onValueChange={(value) => handleChange('mode', value)}
+          >
+            <SelectTrigger id="mode">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="normal">Normal (1 question)</SelectItem>
+              <SelectItem value="enhanced">Enhanced (5 questions)</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
