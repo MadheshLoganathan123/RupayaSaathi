@@ -6,7 +6,7 @@ import StoryGenerator, { StoryData } from "@/components/StoryGenerator";
 import StoryOptionsForm, { StoryOptions } from "@/components/StoryOptionsForm";
 import StoryCard from "@/components/StoryCard";
 import VoiceNarration from "@/components/VoiceNarration";
-import InteractiveQuestion from "@/components/InteractiveQuestion";
+import MultiQuestion from "@/components/MultiQuestion";
 import ProgressDashboard from "@/components/ProgressDashboard";
 import ProgressTracker from "@/components/ProgressTracker";
 import DailyBadge from "@/components/DailyBadge";
@@ -56,6 +56,7 @@ const Index = () => {
     topic: 'personal finance',
     difficulty: 'easy',
     length: 'short',
+    mode: 'normal',
   });
   const { stats, accuracy, progressPercent, dailyStoriesCompleted, storyDifficultyStats, resetForNewBatch, updateScore, markStoryCompleted } = useProgress();
 
@@ -78,6 +79,11 @@ const Index = () => {
     const difficulty = (currentStory?.difficulty || storyOptions.difficulty) as "easy" | "medium" | "hard";
     updateScore(correct, difficulty);
     recordAnswer(correct, difficulty);
+  };
+
+  const handleStoryComplete = (correctCount: number) => {
+    // Story completed, advance to next
+    handleAdvanceIndex();
   };
 
   // Advance to next story index (used by narration or UI)
@@ -144,12 +150,11 @@ const Index = () => {
               onAdvance={handleAdvanceIndex}
             />
 
-            <InteractiveQuestion
+            <MultiQuestion
               key={questionKey}
-              question={stories[currentIndex].question}
-              options={stories[currentIndex].options}
-              correctAnswer={stories[currentIndex].correct}
+              questions={stories[currentIndex].questions}
               onAnswer={handleAnswer}
+              onComplete={handleStoryComplete}
             />
           </>
         ) : (

@@ -7,9 +7,11 @@ import { useToast } from "@/hooks/use-toast";
 interface StoryData {
   title: string;
   story: string;
-  question: string;
-  options: string[];
-  correct: number;
+  questions: Array<{
+    question: string;
+    options: string[];
+    correct: number;
+  }>;
   difficulty: string;
 }
 
@@ -83,9 +85,11 @@ const StoryGenerator = ({
         const isValid = story && 
           story.title && 
           story.story && 
-          story.question && 
-          Array.isArray(story.options) && 
-          story.options.length >= 2;
+          Array.isArray(story.questions) &&
+          story.questions.length > 0 &&
+          story.questions.every((q: any) => 
+            q.question && Array.isArray(q.options) && q.options.length >= 2
+          );
         
         if (!isValid) {
           console.error(`Story ${index} is invalid:`, story);

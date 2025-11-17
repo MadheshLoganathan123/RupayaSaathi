@@ -19,6 +19,15 @@ const DashboardPage = () => {
       const progress = getUserProgress(username);
       setProgressData(progress);
     }
+    // Auto-refresh dashboard every 2 seconds for live updates
+    const interval = setInterval(() => {
+      if (user) {
+        const { username } = JSON.parse(user);
+        const progress = getUserProgress(username);
+        setProgressData(progress);
+      }
+    }, 2000);
+    return () => clearInterval(interval);
   }, [user]);
 
   if (!user) {

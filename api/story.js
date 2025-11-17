@@ -17,7 +17,7 @@ export default async function handler(req, res) {
     body = body || {};
 
     const { test = false } = body;
-    const { language = 'english', numStories = 1, options } = body;
+    const { language = 'english', numStories = 1, options, mode = 'normal' } = body;
     const { topic = 'saving money', difficulty = 'easy', length = 'short' } = options || {};
 
     // API Key test support (keeps previous behavior)
@@ -46,8 +46,14 @@ export default async function handler(req, res) {
     const sanitizedLength = String(length || 'short').trim().slice(0, 20);
 
     const requestedCount = Math.max(5, Math.min(10, Number(numStories || 5)));
+    
+    const isEnhanced = mode === 'enhanced';
+    const numQuestions = isEnhanced ? 5 : 1;
+    const storyContext = isEnhanced 
+      ? 'Write engaging, detailed financial literacy stories set in realistic Indian contexts (cities like Mumbai, Delhi, Bangalore). Include real-world situations, cultural elements, and practical money lessons. Each story should be 8-12 sentences with rich characters and clear moral lessons about finance.'
+      : 'Write clear, simple financial literacy stories (3-5 sentences) with practical lessons relevant to India.';
 
-    const prompt = `You are an assistant that writes short, simple financial-lesson stories for learners.\nReturn a JSON ARRAY with exactly ${requestedCount} objects.\nEach object MUST use the EXACT keys: title, story, question, options, correct.\n- title: short title string (max 6 words)\n- story: very short story (1-4 sentences), simple language for ${lang}\n- question: one question about the story (single sentence)\n- options: array of exactly 10 option strings (10 choices for each question)\n- correct: integer from 0-9 indicating the correct option index\n\nLanguage: ${lang}\nTopic hint: ${sanitizedTopic}\nDifficulty: ${sanitizedDifficulty}\nLength: ${sanitizedLength}\n\nReturn only a JSON array with ${requestedCount} complete story objects.`;
+    const prompt = `You are a financial education expert creating stories for Indian learners.\n\n${storyContext}\n\nReturn a JSON ARRAY with exactly ${requestedCount} story objects.\nEach object MUST have these EXACT keys: title, story, questions\n\n- title: Engaging title (6-10 words) that captures the financial lesson\n- story: The narrative text (follow length guidelines above)\n- questions: Array of exactly ${numQuestions} question objects, each with:\n  * question: Clear question about the story\n  * options: Array of exactly 4 option strings\n  * correct: Integer 0-3 indicating correct answer\n\nLanguage: ${lang}\nFinancial Topic: ${sanitizedTopic}\nDifficulty: ${sanitizedDifficulty}\nStory Length: ${sanitizedLength}\nMode: ${mode}\n\nIMPORTANT: Return ONLY valid JSON array. No markdown, no explanations. Each story must have exactly ${numQuestions} questions.`;
 
     const apiKey = process.env.OPENROUTER_API_KEY;
     let generated = '';
@@ -63,7 +69,7 @@ export default async function handler(req, res) {
             Authorization: `Bearer ${apiKey}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({ model: 'deepseek/deepseek-r1', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: 3000 }),
+          body: JSON.stringify({ model: 'deepseek/deepseek-r1', messages: [{ role: 'user', content: prompt }], temperature: 0.7, max_tokens: isEnhanced ? 5000 : 3000 }),
           signal: controller.signal
         });
         clearTimeout(timeoutId);
